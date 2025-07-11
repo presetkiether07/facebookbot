@@ -13,20 +13,31 @@ const PAGE_ACCESS_TOKEN = "EAAKLFsDdDtIBPCIKeFpMh67NtLlwDbDWUZBrwpJOUVGFYfS5UDlD
 
 app.use(bodyParser.json());
 
-// 🌐 Privacy Policy page (IMPORTANT for App Review)
+// ✅ Privacy Policy route
 app.get("/privacy", (req, res) => {
   res.send(`
     <h1>Privacy Policy</h1>
-    <p>This Messenger bot does not collect any personal data. Data is only used for chatbot interaction.</p>
+    <p>This Messenger bot does not collect or store any personal data. All messages are processed in real-time and discarded.</p>
   `);
 });
 
-// Optional homepage
-app.get("/", (req, res) => {
-  res.send("👋 Hello! This is your Messenger bot webhook.");
+// ✅ Terms of Service route
+app.get("/terms", (req, res) => {
+  res.send(`
+    <h1>Terms of Service</h1>
+    <p>By using this Messenger bot, you agree that it provides informational and entertainment services only. No guarantees are provided.</p>
+  `);
 });
 
-// 📥 Facebook verification
+// ✅ User Data Deletion route
+app.get("/delete", (req, res) => {
+  res.send(`
+    <h1>Data Deletion Request</h1>
+    <p>This bot does not store user data. To delete your interaction history, remove or block the bot in Messenger.</p>
+  `);
+});
+
+// 📥 Facebook Webhook Verification
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -40,7 +51,7 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// 📩 Handle incoming messages
+// 📩 Handle messages
 app.post('/webhook', async (req, res) => {
   const body = req.body;
 
@@ -50,10 +61,16 @@ app.post('/webhook', async (req, res) => {
       const senderId = webhookEvent.sender.id;
 
       if (webhookEvent.message && webhookEvent.message.text) {
+        const receivedText = webhookEvent.message.text.toLowerCase();
+
+        let replyText = "✅ Bot received your message!";
+        if (receivedText.includes("hello")) replyText = "👋 Hi! How can I help you today?";
+        if (receivedText.includes("help")) replyText = "🤖 Try typing 'tutorial', 'commands', or 'about'.";
+
         const reply = {
           messaging_type: "RESPONSE",
           recipient: { id: senderId },
-          message: { text: "✅ Bot received your message!" }
+          message: { text: replyText }
         };
 
         try {
@@ -73,5 +90,5 @@ app.post('/webhook', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Callback server is running on http://localhost:${PORT}/webhook`);
+  console.log(`🚀 Server is running at http://localhost:${PORT}/webhook`);
 });
