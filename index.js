@@ -5,29 +5,29 @@ const axios = require("axios");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔐 Replace this with your own verify token
+// 🔐 Your custom verify token
 const VERIFY_TOKEN = "zeta2009";
 
-// 🤖 Replace this with your Page Access Token
-const PAGE_ACCESS_TOKEN = "EAAKLFsDdDtIBPCIKeFpMh67NtLlwDbDWUZBrwpJOUVGFYfS5UDlDFkXrjzlMovuueSC4T3WowAWi0UZBDGXnS5ueQW0fhVKII3p4ZAjhfZCKos2khoJ3eT7iBC8iU3ZAXTGvsIviNGBKMhzgHZB9oalZAL2wLKaZCrO2sl2QCGbUTzPsEPNiZAZB6ciZC4ktDYhUnOuhltZBhwZDZD";
+// 🤖 Your Page Access Token
+const PAGE_ACCESS_TOKEN = "PASTE_YOUR_PAGE_ACCESS_TOKEN_HERE";
 
 app.use(bodyParser.json());
 
-// ✅ Verification webhook for Facebook
+// ✅ Facebook webhook verification
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("✅ Webhook verified");
+    console.log("✅ Webhook verified successfully");
     res.status(200).send(challenge);
   } else {
     res.sendStatus(403);
   }
 });
 
-// 📩 Handle messages from users
+// 📩 Message handler
 app.post("/webhook", async (req, res) => {
   const body = req.body;
 
@@ -37,74 +37,68 @@ app.post("/webhook", async (req, res) => {
       const senderId = webhookEvent.sender.id;
 
       if (webhookEvent.message && webhookEvent.message.text) {
-        const messageText = webhookEvent.message.text.toLowerCase();
-        let reply;
+        const userMessage = webhookEvent.message.text.toLowerCase();
+        let replyText = "✅ I received your message!";
 
-        if (messageText.includes("hello") || messageText.includes("hi")) {
-          reply = {
-            text: "👋 Hello! How can I help you today?"
-          };
-        } else if (messageText.includes("delete my data")) {
-          reply = {
-            text: "🗑️ Your data deletion request has been received. We will delete any stored information related to you."
-          };
-        } else {
-          reply = {
-            text: "✅ Message received! Send 'hello' to start or 'delete my data' for removal."
-          };
+        if (userMessage.includes("hello") || userMessage.includes("hi")) {
+          replyText = "👋 Hello there! How can I help you today?";
+        } else if (userMessage.includes("delete")) {
+          replyText = "🗑️ Your data will be deleted soon (simulated).";
         }
+
+        const reply = {
+          messaging_type: "RESPONSE",
+          recipient: { id: senderId },
+          message: { text: replyText }
+        };
 
         try {
           await axios.post(
             `https://graph.facebook.com/v18.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`,
-            {
-              messaging_type: "RESPONSE",
-              recipient: { id: senderId },
-              message: reply
-            }
+            reply
           );
         } catch (err) {
-          console.error("❌ Failed to send message:", err.response?.data || err.message);
+          console.error("❌ Failed to send message:", err?.response?.data || err.message);
         }
       }
     }
-
     res.status(200).send("EVENT_RECEIVED");
   } else {
     res.sendStatus(404);
   }
 });
 
-// 📃 Privacy Policy page
+// 📜 Privacy Policy
 app.get("/privacy", (req, res) => {
   res.send(`
     <h1>Privacy Policy</h1>
-    <p>This Messenger bot does not collect or store any personal data. All data is used only during your active chat session.</p>
+    <p>This Messenger bot does not collect any personal data.</p>
+    <p>All data is used only for chatbot interaction purposes.</p>
   `);
 });
 
-// 📃 Terms of Service page
+// 📄 Terms of Service
 app.get("/terms", (req, res) => {
   res.send(`
     <h1>Terms of Service</h1>
-    <p>By using this Messenger bot, you agree to use it for personal, non-commercial purposes only.</p>
+    <p>By using this bot, you agree that it's for demo or personal use only.</p>
   `);
 });
 
-// 📃 Data deletion instructions page
+// 🗑️ User Data Deletion Instructions
 app.get("/delete-data", (req, res) => {
   res.send(`
     <h1>Data Deletion Instructions</h1>
-    <p>If you want your data deleted from this bot, simply send a message saying <strong>"Delete my data"</strong>.</p>
+    <p>If you wish to delete your data, please message this bot with: <b>"Delete my data"</b>.</p>
+    <p>We do not store any personal information on our servers.</p>
   `);
 });
 
-// 🌐 Default homepage (optional)
-app.get("/", (req, res) => {
-  res.send("🤖 This is the homepage of your Facebook Messenger Page Bot.");
+// 404 fallback
+app.get("*", (req, res) => {
+  res.status(403).send("❌ Forbidden or route not found.");
 });
 
-// 🚀 Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
