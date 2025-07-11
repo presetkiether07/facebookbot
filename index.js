@@ -13,6 +13,19 @@ const PAGE_ACCESS_TOKEN = "EAAKLFsDdDtIBPCIKeFpMh67NtLlwDbDWUZBrwpJOUVGFYfS5UDlD
 
 app.use(bodyParser.json());
 
+// 🌐 Privacy Policy page (IMPORTANT for App Review)
+app.get("/privacy", (req, res) => {
+  res.send(`
+    <h1>Privacy Policy</h1>
+    <p>This Messenger bot does not collect any personal data. Data is only used for chatbot interaction.</p>
+  `);
+});
+
+// Optional homepage
+app.get("/", (req, res) => {
+  res.send("👋 Hello! This is your Messenger bot webhook.");
+});
+
 // 📥 Facebook verification
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
@@ -49,7 +62,7 @@ app.post('/webhook', async (req, res) => {
             reply
           );
         } catch (err) {
-          console.error("❌ Failed to send message:", err.response.data);
+          console.error("❌ Failed to send message:", err.response?.data || err.message);
         }
       }
     }
